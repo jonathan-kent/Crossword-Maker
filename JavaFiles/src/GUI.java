@@ -3,6 +3,8 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -25,6 +27,7 @@ public class GUI extends JFrame {
 	public boolean finished = false;
 	
 	public char[][] finishedGrid = new char[21][21];
+	public int[][][] calledBy = new int[21][21][2];
 	
 	public GUI() {
 		this.setTitle("Crossword Maker");
@@ -72,6 +75,14 @@ public class GUI extends JFrame {
 					/*if(mx>=spacing+i*20+30 && mx<i*20+30+20-2*spacing && my>=spacing+j*20+30+26 && my<j*20+26+30+20-2*spacing) {
 						g.setColor(Color.BLUE);
 					}*/
+					if(submitted) {
+						if(calledBy[i][j][0]!=-1) {
+							float h = (float)calledBy[i][j][0]/15;
+							float b = (float)((float)(calledBy[i][j][1]%15)/30)+(float)0.5;
+							Color color = Color.getHSBColor(h, 1, b);
+							g.setColor(color);
+						}
+					}
 					g.fillRect(spacing+i*20+30, spacing+j*20+30, 20-2*spacing, 20-2*spacing);
 					if(submitted) {
 						if(finishedGrid[i][j]!='.' && finishedGrid[i][j]!='!') {
