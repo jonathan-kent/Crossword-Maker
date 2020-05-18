@@ -19,6 +19,13 @@ public class CrosswordMaker implements Runnable{
 	
 	public static void main(String[] args) {
 		
+		char[][] grid = new char[21][21];
+		for(int i=0; i<grid.length; i++) {
+			for(int j=0; j<grid.length; j++) {
+				grid[i][j] = '.';
+			}
+		}
+		gui.finishedGrid = grid;
 		new Thread(new CrosswordMaker()).start();
 		
 	}
@@ -59,7 +66,7 @@ public class CrosswordMaker implements Runnable{
 	}
 	
 	
-	public static char[][] makeCustom(boolean[][] off){
+	public static char[][] makeCustom(boolean[][] off, char[][] submittedGrid){
 		char[][] firstLetters = getFirstLetters(off);
 		//prep the grid
 		//! is black square and . is undecided square 
@@ -69,7 +76,31 @@ public class CrosswordMaker implements Runnable{
 				if(off[i][j]==true) {
 					grid[i][j]='!';
 				} else {
-					grid[i][j]='.';
+					grid[i][j] = submittedGrid[i][j];
+				}
+			}
+		}
+		//add entered words to word list
+		for(int i=0; i<grid.length; i++) {
+			for(int j=0; j<grid.length; j++) {
+				if(firstLetters[i][j] == 'a' || firstLetters[i][j] == 'b') {
+					String acrossRegex = getAcrossRegex(grid, i, j);
+					if(!acrossRegex.contains(".")) {
+						String word = acrossRegex;
+						word = word.substring(1, word.length()-1);
+						if(!allWordsHash.contains(word)) {
+							allWordsHash.add(word);
+						}
+					}
+				} else if(firstLetters[i][j] == 'd' || firstLetters[i][j] == 'b') {
+					String downRegex = getDownRegex(grid, i, j);
+					if(!downRegex.contains(".")) {
+						String word = downRegex;
+						word = word.substring(1, word.length()-1);
+						if(!allWordsHash.contains(word)) {
+							allWordsHash.add(word);
+						}
+					}
 				}
 			}
 		}
@@ -103,6 +134,13 @@ public class CrosswordMaker implements Runnable{
 							i = culpritSignature[0];
 							j = culpritSignature[1];
 							newGrid = removeCulprit(backupGrid, backupCalledBy, culpritSignature);
+							for(int k=0; k<newGrid.length; k++) {
+								for(int l=0; l<newGrid.length; l++) {
+									if(submittedGrid[k][l]!='.') {
+										newGrid[k][l] = submittedGrid[k][l];
+									}
+								}
+							}
 							calledBy = copy3DArray(backupCalledBy);
 						}
 					}
