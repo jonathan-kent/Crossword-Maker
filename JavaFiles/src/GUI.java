@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,9 +27,8 @@ public class GUI extends JFrame {
 	public boolean[][] isFirstLetter = new boolean[21][21];
 	
 	public boolean submitted = false;
-	public boolean finished = false;
 	
-	public char[][] finishedGrid = new char[21][21];
+	public String[][] finishedGrid = new String[21][21];
 	public int[][][] calledBy = new int[21][21][2];
 	
 	public GUI() {
@@ -47,6 +47,12 @@ public class GUI extends JFrame {
 		this.addMouseListener(click);
 		Keyboard keyboard = new Keyboard();
 		this.addKeyListener(keyboard);
+		
+		for(int i=0; i<finishedGrid.length; i++) {
+			for(int j=0; j<finishedGrid.length; j++) {
+				finishedGrid[i][j] = "";
+			}
+		}
 	}
 	
 	public class Grid extends JPanel {
@@ -84,18 +90,18 @@ public class GUI extends JFrame {
 						g.setColor(Color.BLUE);
 					}*/
 					//color by call signature
-					if(submitted) {
+					/*if(submitted) {
 						if(calledBy[i][j][0]!=-1) {
 							float h = (float)calledBy[i][j][0]/15;
 							float b = (float)((float)(calledBy[i][j][1]%15)/30)+(float)0.5;
 							Color color = Color.getHSBColor(h, 1, b);
 							g.setColor(color);
 						}
-					}
+					}*/
 					
 					g.fillRect(spacing+i*20+30, spacing+j*20+30, 20-2*spacing, 20-2*spacing);
 					//if(submitted) {
-						if(finishedGrid[i][j]!='.' && finishedGrid[i][j]!='!') {
+						if(!finishedGrid[i][j].contains("[") && finishedGrid[i][j]!="!") {
 							g.setColor(Color.BLACK);
 							g.drawString(""+finishedGrid[i][j], spacing+i*20+36, spacing+j*20+43);
 						}
@@ -137,9 +143,9 @@ public class GUI extends JFrame {
 				selectedX++;
 			} else if(selectedX>=0 && selectedX<finishedGrid.length && selectedY>=0 && selectedY<finishedGrid.length) {
 				if(key==KeyEvent.VK_BACK_SPACE) {
-					finishedGrid[selectedX][selectedY] = '.';
+					finishedGrid[selectedX][selectedY] = "[^.]";
 				} else {
-					finishedGrid[selectedX][selectedY] = key;
+					finishedGrid[selectedX][selectedY] = ""+key;
 				}
 			}
 			
@@ -165,9 +171,9 @@ public class GUI extends JFrame {
 				selectedX++;
 			} else if(selectedX>=0 && selectedX<finishedGrid.length && selectedY>=0 && selectedY<finishedGrid.length) {
 				if(key==KeyEvent.VK_BACK_SPACE) {
-					finishedGrid[selectedX][selectedY] = '.';
+					finishedGrid[selectedX][selectedY] = "[^.]";
 				} else {
-					finishedGrid[selectedX][selectedY] = key;
+					finishedGrid[selectedX][selectedY] = ""+key;
 				}
 			}
 		}
@@ -183,8 +189,10 @@ public class GUI extends JFrame {
 					if(xBox(mx,my) !=-1 && yBox(mx,my) != -1) {
 						if(off[xBox(mx,my)][yBox(mx,my)]) {
 							off[xBox(mx,my)][yBox(mx,my)] = false;
+							finishedGrid[xBox(mx,my)][yBox(mx,my)] = "[^.]";
 						} else {
 							off[xBox(mx,my)][yBox(mx,my)] = true;
+							finishedGrid[xBox(mx,my)][yBox(mx,my)] = "!";
 						}
 					}
 				}
@@ -219,22 +227,31 @@ public class GUI extends JFrame {
 					if(xBox(mx,my) !=-1 && yBox(mx,my) != -1) {
 						if(off[xBox(mx,my)][yBox(mx,my)]) {
 							off[xBox(mx,my)][yBox(mx,my)] = false;
+							finishedGrid[xBox(mx,my)][yBox(mx,my)] = "[^.]";
 						} else {
 							off[xBox(mx,my)][yBox(mx,my)] = true;
+							finishedGrid[xBox(mx,my)][yBox(mx,my)] = "!";
 						}
 					}
 				}
 			
 				if (mx>=190 && mx<290 && my>=480 && my<500) {
 					submitted = true;
-					Thread fill = new Thread() {
-						public void run() { 
+					Thread fill = new Thread (){
+						public void run() {
 							long startTime = System.nanoTime();
 							finishedGrid = CrosswordMaker.makeCustom(off, finishedGrid);
 							long endTime = System.nanoTime();
-							long duration = (endTime - startTime)/100000000;  //divide by 1000000 to get milliseconds.
+							long duration = (endTime - startTime)/100000000;
 							System.out.println("time: "+duration);
-					    }
+							submitted = false;
+							int[] clearSignature = {-1,-1};
+							for(int i=0; i<calledBy.length; i++) {
+								for(int j=0; j<calledBy.length; j++) {
+									calledBy[i][j] = clearSignature;
+								}
+							}
+						}
 					};
 					fill.start();
 				}
@@ -260,8 +277,10 @@ public class GUI extends JFrame {
 								for(int j=startYBox; j<= endYBox; j++) {
 									if(off[i][j]==false) {
 										off[i][j]=true;
+										finishedGrid[i][j] = "!";
 									}else {
 										off[i][j]=false;
+										finishedGrid[i][j] = "[^.]";
 									}
 								}
 							}
@@ -272,8 +291,10 @@ public class GUI extends JFrame {
 								for(int j=startYBox; j<= endYBox; j++) {
 									if(off[i][j]==false) {
 										off[i][j]=true;
+										finishedGrid[i][j] = "!";
 									}else {
 										off[i][j]=false;
+										finishedGrid[i][j] = "[^.]";
 									}
 								}
 							}
@@ -284,8 +305,10 @@ public class GUI extends JFrame {
 								for(int j=startYBox; j>= endYBox; j--) {
 									if(off[i][j]==false) {
 										off[i][j]=true;
+										finishedGrid[i][j] = "!";
 									}else {
 										off[i][j]=false;
+										finishedGrid[i][j] = "[^.]";
 									}
 								}
 							}
@@ -296,16 +319,20 @@ public class GUI extends JFrame {
 								for(int j=startYBox; j>= endYBox; j--) {
 									if(off[i][j]==false) {
 										off[i][j]=true;
+										finishedGrid[i][j] = "!";
 									}else {
 										off[i][j]=false;
+										finishedGrid[i][j] = "[^.]";
 									}
 								}
 							}
 						}
 						if(off[startXBox][startYBox]==false) {
 							off[startXBox][startYBox]=true;
+							finishedGrid[startXBox][startYBox] = "!";
 						}else {
 							off[startXBox][startYBox]=false;
+							finishedGrid[startXBox][startYBox] = "[^.]";
 						}
 					}
 				}
